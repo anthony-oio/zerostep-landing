@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>zerostep</title>
   <meta name="description" content="zerostep" />
-  <meta name="theme-color" content="#243012" />
+  <meta name="theme-color" content="#142420" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -24,12 +24,12 @@
       overflow: hidden;
       position: relative;
       font-family: "Caveat Brush", system-ui, sans-serif;
-      /* painterly, murky mossy-green dusk — like a faded film frame */
+      /* murky green-amber dusk with a cool halo, like the frame behind the blue figure */
       background:
-        radial-gradient(110% 80% at 72% 10%, rgba(72,170,104,.6)  0%, rgba(72,170,104,0) 48%),
-        radial-gradient(80% 70% at 26% 20%,  rgba(150,148,70,.42)  0%, rgba(150,148,70,0) 50%),
-        radial-gradient(150% 130% at 48% 118%, #161a0a 0%, #2e3614 28%, #46571f 52%, #3a5230 76%, #1c2c0f 100%);
-      background-color: #12150a;
+        radial-gradient(70% 60% at 50% 42%, rgba(40,150,210,.28) 0%, rgba(40,150,210,0) 55%),
+        radial-gradient(80% 70% at 24% 18%, rgba(96,150,76,.42) 0%, rgba(96,150,76,0) 50%),
+        radial-gradient(150% 130% at 52% 118%, #0b121a 0%, #1a281f 30%, #38421d 55%, #2c2611 80%, #0e140c 100%);
+      background-color: #0b1018;
     }
 
     /* slow painterly drift of the whole sky */
@@ -37,9 +37,9 @@
       content: "";
       position: fixed; inset: -10%;
       background:
-        radial-gradient(44vmin 44vmin at 70% 6%,  rgba(80,210,135,.45), transparent 70%),
-        radial-gradient(30vmin 30vmin at 18% 22%, rgba(180,190,90,.4),  transparent 70%),
-        radial-gradient(36vmin 36vmin at 50% 92%, rgba(150,90,30,.32),  transparent 70%);
+        radial-gradient(40vmin 40vmin at 52% 46%, rgba(34,150,235,.4),  transparent 68%),
+        radial-gradient(34vmin 34vmin at 20% 20%, rgba(96,160,80,.4),   transparent 70%),
+        radial-gradient(34vmin 34vmin at 78% 86%, rgba(150,90,30,.3),   transparent 70%);
       mix-blend-mode: screen;
       animation: drift 150s ease-in-out infinite;
       pointer-events: none;
@@ -52,9 +52,9 @@
 
     /* soft out-of-focus bokeh blooms, like the film backdrop */
     .bloom { position: fixed; border-radius: 50%; filter: blur(46px); mix-blend-mode: screen; pointer-events: none; }
-    .bloom.g { width: 38vmin; height: 38vmin; background: #46c87a; top: 2%;  left: 58%; opacity:.55; animation: bob1 110s ease-in-out infinite; }
-    .bloom.y { width: 26vmin; height: 26vmin; background: #b6c060; top: 18%; left: 10%; opacity:.45; animation: bob2 130s ease-in-out infinite; }
-    .bloom.o { width: 40vmin; height: 40vmin; background: #8c5a1e; bottom: -8%; left: 32%; opacity:.4;  animation: bob1 160s ease-in-out infinite reverse; }
+    .bloom.g { width: 40vmin; height: 40vmin; background: #2aa0ee; top: 24%; left: 46%; opacity:.42; animation: bob1 110s ease-in-out infinite; }
+    .bloom.y { width: 28vmin; height: 28vmin; background: #8fb858; top: 14%; left: 12%; opacity:.42; animation: bob2 130s ease-in-out infinite; }
+    .bloom.o { width: 38vmin; height: 38vmin; background: #8c5a1e; bottom: -8%; left: 64%; opacity:.36; animation: bob1 160s ease-in-out infinite reverse; }
     @keyframes bob1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(1.6vmin,-2vmin) scale(1.05)} }
     @keyframes bob2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-2vmin,1.6vmin) scale(1.04)} }
 
@@ -62,11 +62,11 @@
     .stage {
       position: relative;
       width: min(92vw, 1100px);
-      /* warm rim-light glow, like the gold edges on the film's silhouettes */
+      /* electric cyan rim-light glow, like the figure's chest-glow */
       filter:
-        drop-shadow(0 0 22px rgba(255,170,60,.55))
-        drop-shadow(0 0 60px rgba(255,120,30,.35))
-        drop-shadow(0 12px 30px rgba(30,6,0,.6));
+        drop-shadow(0 0 22px rgba(60,180,255,.6))
+        drop-shadow(0 0 62px rgba(20,120,235,.4))
+        drop-shadow(0 12px 30px rgba(4,12,28,.65));
       animation: sway 60s ease-in-out infinite;
     }
     .stage svg { width: 100%; height: auto; display: block; }
@@ -136,12 +136,12 @@
   <div class="stage">
     <svg viewBox="0 0 1100 360" role="img" aria-label="zerostep">
       <defs>
-        <!-- warm fill: gold at top melting to fiery red at the base -->
+        <!-- blue-figure fill: pale cyan highlight melting to deep indigo, like the glowing figure -->
         <linearGradient id="warm" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"  stop-color="#ffe27a"/>
-          <stop offset="38%" stop-color="#ffb238"/>
-          <stop offset="72%" stop-color="#f4621f"/>
-          <stop offset="100%" stop-color="#c92516"/>
+          <stop offset="0%"  stop-color="#bdeeff"/>
+          <stop offset="32%" stop-color="#4fc6f6"/>
+          <stop offset="68%" stop-color="#1f78c6"/>
+          <stop offset="100%" stop-color="#10314f"/>
         </linearGradient>
 
         <!-- the "boiling line": noise reseeds a few times a second, edges wobble like hand-drawn cels -->
@@ -158,7 +158,7 @@
               font-family="'Caveat Brush', system-ui, sans-serif"
               font-size="300"
               fill="url(#warm)"
-              stroke="#2a0d06" stroke-width="9"
+              stroke="#07182c" stroke-width="9"
               stroke-linejoin="round" paint-order="stroke">zerostep</text>
       </g>
     </svg>
