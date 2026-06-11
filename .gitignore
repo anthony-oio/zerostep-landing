@@ -2,3 +2,10 @@ preview.png
 bird.*
 frames/
 thumb_*.jpg
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
