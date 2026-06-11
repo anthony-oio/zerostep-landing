@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>zerostep</title>
+  <meta name="description" content="zerostep" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bob: 1.9s;          /* per-letter bob duration */
+      --sky-shift: 26s;     /* background colour drift  */
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body { height: 100%; }
+
+    body {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      font-family: "Fredoka", system-ui, sans-serif;
+      /* dreamy animated sky */
+      background: linear-gradient(135deg,
+        #ffd6a5, #ffadad, #bdb2ff, #a0c4ff, #9bf6ff, #caffbf);
+      background-size: 300% 300%;
+      animation: sky var(--sky-shift) ease-in-out infinite;
+    }
+
+    @keyframes sky {
+      0%   { background-position:   0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position:   0% 50%; }
+    }
+
+    /* soft drifting blobs of light for depth */
+    .glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: .55;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+    .glow.a { width: 46vmin; height: 46vmin; background: #fff7e6; top: 8%;  left: 12%; animation: float1 14s ease-in-out infinite; }
+    .glow.b { width: 38vmin; height: 38vmin; background: #ffe0f0; bottom: 6%; right: 10%; animation: float2 18s ease-in-out infinite; }
+    .glow.c { width: 30vmin; height: 30vmin; background: #e6f7ff; top: 40%; right: 26%; animation: float1 22s ease-in-out infinite reverse; }
+
+    @keyframes float1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(4vmin,-5vmin) scale(1.12); } }
+    @keyframes float2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-5vmin,4vmin) scale(1.08); } }
+
+    /* the wordmark */
+    .mark {
+      position: relative;
+      display: flex;
+      font-weight: 700;
+      font-size: clamp(3.2rem, 17vw, 14rem);
+      letter-spacing: -.02em;
+      /* gentle whole-word breathing */
+      animation: breathe 6s ease-in-out infinite;
+      user-select: none;
+    }
+
+    @keyframes breathe {
+      0%,100% { transform: scale(1) rotate(0deg); }
+      50%     { transform: scale(1.03) rotate(-.4deg); }
+    }
+
+    .mark span {
+      display: inline-block;
+      color: #2b2440;
+      /* candy edge so letters feel tactile/plush */
+      text-shadow:
+        0 1px 0 #fff,
+        0 6px 0 rgba(255,255,255,.45),
+        0 14px 22px rgba(60,40,90,.28);
+      animation: bob var(--bob) cubic-bezier(.36,.07,.31,1) infinite;
+      transform-origin: center bottom;
+    }
+
+    /* each letter offset so it ripples like a wave */
+    .mark span:nth-child(1) { animation-delay: 0.00s; }
+    .mark span:nth-child(2) { animation-delay: 0.12s; }
+    .mark span:nth-child(3) { animation-delay: 0.24s; }
+    .mark span:nth-child(4) { animation-delay: 0.36s; }
+    .mark span:nth-child(5) { animation-delay: 0.48s; }
+    .mark span:nth-child(6) { animation-delay: 0.60s; }
+    .mark span:nth-child(7) { animation-delay: 0.72s; }
+    .mark span:nth-child(8) { animation-delay: 0.84s; }
+
+    @keyframes bob {
+      0%,100% { transform: translateY(0)      scaleY(1);    }
+      30%     { transform: translateY(-7%)    scaleY(1.04); }
+      50%     { transform: translateY(-11%)   scaleY(1.06); }
+      70%     { transform: translateY(-7%)    scaleY(1.04); }
+      85%     { transform: translateY(2%)     scaleY(.96);  }
+    }
+
+    /* the "o" is a little planet that spins */
+    .mark .o {
+      color: transparent;
+      position: relative;
+    }
+    .mark .o::before {
+      content: "";
+      position: absolute;
+      width: .66em;
+      height: .66em;
+      left: 50%;
+      top: 56%;
+      margin-left: -.33em;
+      margin-top: -.33em;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 32% 30%, #fff 0 8%, transparent 9%),
+        conic-gradient(from 0deg, #ff9aa2, #ffd6a5, #a0c4ff, #bdb2ff, #ff9aa2);
+      box-shadow: 0 1px 0 #fff, 0 12px 20px rgba(60,40,90,.3);
+      animation: spin 7s linear infinite, bob var(--bob) cubic-bezier(.36,.07,.31,1) infinite;
+      animation-delay: 0s, .36s;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tagline {
+      position: fixed;
+      bottom: max(5vh, 1.5rem);
+      width: 100%;
+      text-align: center;
+      font-weight: 500;
+      font-size: clamp(.8rem, 2.4vw, 1.1rem);
+      letter-spacing: .35em;
+      text-transform: lowercase;
+      color: rgba(43,36,64,.55);
+      animation: fadepulse 6s ease-in-out infinite;
+    }
+    @keyframes fadepulse { 0%,100% { opacity:.4; } 50% { opacity:.75; } }
+
+    /* be kind to people who ask for less motion */
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!--
+   ────────────────────────────────────────────────────────────
+     hello, curious one. you opened the source. that's the spirit.
+     the small things zerostep makes live just one hop away:
+
+       ism        →  https://ism.zerostep.cc
+       transcribe →  https://transcribe.zerostep.cc
+       sops       →  https://sops.zerostep.cc
+       ringtone   →  https://ringtone.zerostep.cc
+       houselive  →  https://houselive.zerostep.cc
+
+     no menu on the page. you found the door. go wander.
+   ────────────────────────────────────────────────────────────
+  -->
+
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+  <div class="glow c"></div>
+
+  <h1 class="mark" aria-label="zerostep">
+    <span>z</span><span>e</span><span>r</span><span class="o">o</span><span>s</span><span>t</span><span>e</span><span>p</span>
+  </h1>
+
+  <p class="tagline">small things, made with care</p>
+
+  <!-- hidden in plain sight: real, crawlable links for the inspectors -->
+  <nav hidden aria-hidden="true" id="rooms">
+    <a href="https://ism.zerostep.cc">ISM Search</a>
+    <a href="https://transcribe.zerostep.cc">Video Transcriber</a>
+    <a href="https://sops.zerostep.cc">SOPS</a>
+    <a href="https://ringtone.zerostep.cc">Ringtone Maker</a>
+    <a href="https://houselive.zerostep.cc">HouseLive</a>
+  </nav>
+</body>
+</html>
