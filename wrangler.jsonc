@@ -1,0 +1,12 @@
+{
+  // Static-assets-only Worker for the zerostep.cc apex landing page.
+  // No `main` = no Worker script; Cloudflare just serves files from ./public.
+  // The assets directory MUST be a subfolder (not the repo root) so the build's
+  // node_modules/ (wrangler's ~119 MiB workerd binary) is never uploaded.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zerostep-landing",
+  "compatibility_date": "2026-06-12",
+  "assets": {
+    "directory": "./public"
+  }
+}

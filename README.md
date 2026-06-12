@@ -27,5 +27,17 @@ node make-path.cjs                # writes wordmark-path.json from CaveatBrush-R
 apple-touch 180, PWA 192/512) are screenshotted from it.
 
 ## Deploy
-Connected to Cloudflare Pages → builds on push to `main`.
-Build command: *(none)* · Output directory: `/` (root).
+Cloudflare Workers static-assets, configured by `wrangler.jsonc`
+(`assets.directory = ./public`) → deploys on push to `main`.
+
+**Build command: _(none/empty)_.** The assets directory MUST stay `./public`,
+not the repo root: Cloudflare's build installs Wrangler into `node_modules/`
+(its `workerd` binary is ~119 MiB, over the 25 MiB per-asset limit), so uploading
+the repo root fails. Keeping `node_modules` in `.gitignore` is not enough — the
+build regenerates it. Serving only `public/` sidesteps it entirely.
+
+## Layout
+- `public/` — the deployed static site (index.html + icons + manifest); the only
+  thing Cloudflare uploads.
+- repo root — build tooling only (`make-path.cjs`, the TTF, `package.json`,
+  `wrangler.jsonc`); never deployed.
