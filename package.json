@@ -1,0 +1,23 @@
+{
+  "name": "zerostep-landing",
+  "version": "1.0.0",
+  "description": "The apex landing page for **zerostep.cc** — a single static `index.html`, deployed on Cloudflare Pages (free tier).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anthony-oio/zerostep-landing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/anthony-oio/zerostep-landing/issues"
+  },
+  "homepage": "https://github.com/anthony-oio/zerostep-landing#readme",
+  "dependencies": {
+    "opentype.js": "^1.3.4"
+  }
+}
