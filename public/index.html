@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>zerostep</title>
   <meta name="description" content="zerostep" />
-  <meta name="theme-color" content="#05060c" />
+  <meta name="theme-color" content="#070a10" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -14,12 +14,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; }
-    body {
-      overflow: hidden;
-      position: relative;
-      background: radial-gradient(120% 120% at 50% 45%, #0a0c16 0%, #06060e 55%, #040308 100%);
-      background-color: #05060c;
-    }
+    body { overflow: hidden; position: relative; background: #070a10; }
 
     #scene { position: fixed; inset: 0; z-index: 1; display: block; }
 
@@ -27,7 +22,7 @@
     .grain {
       position: fixed; inset: -50%; z-index: 2;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      opacity: .10; mix-blend-mode: overlay; pointer-events: none;
+      opacity: .12; mix-blend-mode: overlay; pointer-events: none;
       animation: grain 1.6s steps(6) infinite;
     }
     @keyframes grain {
@@ -37,7 +32,7 @@
 
     .vignette {
       position: fixed; inset: 0; z-index: 3; pointer-events: none;
-      background: radial-gradient(120% 110% at 50% 48%, transparent 45%, rgba(2,2,6,.7) 100%);
+      background: radial-gradient(115% 105% at 50% 46%, transparent 42%, rgba(4,6,12,.74) 100%);
       mix-blend-mode: multiply;
     }
 
@@ -63,7 +58,7 @@
        ringtone   →  https://ringtone.zerostep.cc
        houselive  →  https://houselive.zerostep.cc
 
-     no menu on the page. you found the door. go wander.
+     two skies. reload to swap. you found the door — go wander.
    ────────────────────────────────────────────────────────────
   -->
 
@@ -99,19 +94,18 @@
     import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
     import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-    // tunable look — dialled in locally via ?tune, baked here for prod
-    const P = {
-      exposure: 0.75,
-      bloomStrength: 0.5,
-      bloomRadius: 0.4,
-      bloomThreshold: 0.0,
-      diskOpacity: 0.65,
-      coreSize: 1.05,
-      coreOpacity: 0.69,
-      spinSpeed: 0.02,
-      starOpacity: 0.35,
-      bgIntensity: 0.0
-    };
+    // ---------- choose which sky to show (alternate each load) ----------
+    const VIEWS = ['galaxy', 'starfield'];
+    let view = new URLSearchParams(location.search).get('view');
+    if (!VIEWS.includes(view)) {
+      try {
+        const last = localStorage.getItem('zs_view');
+        view = last === 'galaxy' ? 'starfield' : 'galaxy';   // strict toggle across visits
+        localStorage.setItem('zs_view', view);
+      } catch (e) {
+        view = Math.random() < 0.5 ? 'galaxy' : 'starfield'; // no storage → random
+      }
+    }
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const canvas = document.getElementById('scene');
@@ -121,33 +115,12 @@
     catch (e) { canvas.style.display = 'none'; throw e; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = P.exposure;
     renderer.setClearColor(0x000000, 0);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 300);
 
-    // ---- deep-space backdrop ----
-    function makeBackground(w, h) {
-      const cv = document.createElement('canvas');
-      cv.width = Math.min(w, 1600); cv.height = Math.min(h, 1000);
-      const x = cv.getContext('2d'), W = cv.width, H = cv.height;
-      const g = x.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, '#06070f'); g.addColorStop(.5, '#080810'); g.addColorStop(1, '#050409');
-      x.fillStyle = g; x.fillRect(0, 0, W, H);
-      const blob = (cx, cy, r, col, a) => {
-        const rg = x.createRadialGradient(cx, cy, 0, cx, cy, r);
-        rg.addColorStop(0, col); rg.addColorStop(1, 'rgba(0,0,0,0)');
-        x.globalAlpha = a; x.fillStyle = rg; x.fillRect(0, 0, W, H); x.globalAlpha = 1;
-      };
-      blob(W*0.26, H*0.20, Math.max(W,H)*0.55, 'rgba(46,64,128,1)', .10);  // faint cool nebula
-      blob(W*0.76, H*0.82, Math.max(W,H)*0.55, 'rgba(128,72,40,1)', .10);  // faint warm nebula
-      const tex = new THREE.CanvasTexture(cv);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      return tex;
-    }
-
-    // ---- soft round sprite ----
+    // ---------- shared helpers ----------
     function softDot(inner) {
       const c = document.createElement('canvas'); c.width = c.height = 64;
       const g = c.getContext('2d');
@@ -158,190 +131,209 @@
       g.fillStyle = rg; g.fillRect(0,0,64,64);
       const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
     }
-    const dot = softDot(0.22), coreTex = softDot(0.04);
+    function bgCanvas(w, h, paint) {
+      const cv = document.createElement('canvas');
+      cv.width = Math.min(w, 1600); cv.height = Math.min(h, 1000);
+      const x = cv.getContext('2d');
+      paint(x, cv.width, cv.height, (cx,cy,r,col,a) => {
+        const rg = x.createRadialGradient(cx,cy,0,cx,cy,r);
+        rg.addColorStop(0,col); rg.addColorStop(1,'rgba(0,0,0,0)');
+        x.globalAlpha = a; x.fillStyle = rg; x.fillRect(0,0,cv.width,cv.height); x.globalAlpha = 1;
+      });
+      const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; return tex;
+    }
 
-    // ---- galaxy / accretion disk ----
-    const tilt = new THREE.Group();
-    tilt.rotation.x = 0.34;    // flatter / more edge-on — thin, wide ellipse like the reference
-    tilt.rotation.z = 0.12;
-    scene.add(tilt);
-    const spin = new THREE.Group();
-    tilt.add(spin);
+    // ======================================================================
+    //  STARFIELD — drifting motes over a murky green-amber dusk
+    // ======================================================================
+    function makeStarfield() {
+      const P = { exposure: 0.9, bloomStrength: 0.42, bloomRadius: 0.5, bloomThreshold: 0.38,
+                  particleOpacity: 0.5, drift: 1.0, bgIntensity: 0.9 };
+      document.body.style.background =
+        'radial-gradient(70% 60% at 50% 44%, rgba(40,150,210,.26) 0%, rgba(40,150,210,0) 55%),' +
+        'radial-gradient(80% 70% at 24% 18%, rgba(96,150,76,.40) 0%, rgba(96,150,76,0) 50%),' +
+        'radial-gradient(150% 130% at 52% 118%, #0b121a 0%, #1a281f 30%, #38421d 55%, #2c2611 80%, #0e140c 100%) #0b1018';
 
-    const R = 6.2, N = 14000;
-    const ARMS = 2;        // number of spiral arms
-    const WIND = 2.3;      // how tightly the arms wind
-    const ARM_SPREAD = 0.55; // angular scatter across an arm (radians)
-    const HAZE = 0.28;     // fraction of stars left as smooth inter-arm haze
-    const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5); // ~normal, ±1.5
-    const aPos = new Float32Array(N*3), aCol = new Float32Array(N*3), aSize = new Float32Array(N);
-    const cCore = new THREE.Color(0xfff1cf), cIn = new THREE.Color(0xffcf86),
-          cMid = new THREE.Color(0xef8638), cOut = new THREE.Color(0x6e2410);
-    const tc = new THREE.Color();
-    for (let i = 0; i < N; i++) {
-      const rr = Math.pow(Math.random(), 1.9);          // dense toward the core
-      const r = 0.25 + rr * R;
-      let th;
-      if (Math.random() < HAZE) {
-        th = Math.random() * Math.PI * 2;               // smooth disk haze between arms
-      } else {
-        const branch = Math.floor(Math.random() * ARMS) * (Math.PI * 2 / ARMS);
-        th = branch + r * WIND + gauss() * ARM_SPREAD;  // log-spiral arm + scatter
+      const dot = softDot(0.25);
+      const N = 1100, pp = new Float32Array(N*3);
+      for (let i=0;i<N;i++){ pp[i*3]=(Math.random()-0.5)*22; pp[i*3+1]=(Math.random()-0.5)*13; pp[i*3+2]=(Math.random()-0.5)*12-3; }
+      const pgeo = new THREE.BufferGeometry();
+      pgeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
+      const pmat = new THREE.PointsMaterial({ size: 0.078, map: dot, transparent: true, depthWrite: false,
+                    blending: THREE.AdditiveBlending, color: 0x9bd2ff, opacity: P.particleOpacity });
+      const motes = new THREE.Points(pgeo, pmat);
+      scene.add(motes);
+
+      return {
+        P,
+        background: (w,h) => bgCanvas(w,h,(x,W,H)=>{
+          const g = x.createLinearGradient(0,0,0,H);
+          g.addColorStop(0,'#0b121a'); g.addColorStop(.30,'#1a281f'); g.addColorStop(.55,'#38421d');
+          g.addColorStop(.80,'#2c2611'); g.addColorStop(1,'#0e140c');
+          x.fillStyle=g; x.fillRect(0,0,W,H);
+          const blob=(cx,cy,r,col,a)=>{const rg=x.createRadialGradient(cx,cy,0,cx,cy,r);rg.addColorStop(0,col);rg.addColorStop(1,'rgba(0,0,0,0)');x.globalAlpha=a;x.fillStyle=rg;x.fillRect(0,0,W,H);x.globalAlpha=1;};
+          blob(W*0.24,H*0.18,Math.max(W,H)*0.42,'rgba(96,150,76,1)',.40);
+          blob(W*0.66,H*1.02,Math.max(W,H)*0.42,'rgba(140,90,30,1)',.34);
+          blob(W*0.50,H*0.46,Math.max(W,H)*0.40,'rgba(40,150,210,1)',.26);
+        }),
+        fit: () => { camera.position.set(0, 0.3, 8); camera.lookAt(0,0,0); },
+        animate: (t) => { motes.rotation.y = t*0.012*P.drift; motes.position.y = Math.sin(t*0.05)*0.15*P.drift; },
+        apply: () => { pmat.opacity = P.particleOpacity; },
+        gui: (gui) => { const f = gui.addFolder('scene');
+          f.add(P,'exposure',0,2,0.01).onChange(applyParams);
+          f.add(P,'particleOpacity',0,1,0.01).onChange(applyParams);
+          f.add(P,'bgIntensity',0,1.5,0.01).onChange(applyParams);
+          f.add(P,'drift',0,3,0.01); }
+      };
+    }
+
+    // ======================================================================
+    //  GALAXY — rotating spiral accretion disk
+    // ======================================================================
+    function makeGalaxy() {
+      const P = { exposure: 0.75, bloomStrength: 0.5, bloomRadius: 0.4, bloomThreshold: 0.0,
+                  diskOpacity: 0.65, coreSize: 1.05, coreOpacity: 0.69, spinSpeed: 0.02,
+                  starOpacity: 0.35, bgIntensity: 0.0 };
+      document.body.style.background =
+        'radial-gradient(120% 120% at 50% 45%, #0a0c16 0%, #06060e 55%, #040308 100%) #05060c';
+
+      const dot = softDot(0.22), coreTex = softDot(0.04);
+      const tilt = new THREE.Group(); tilt.rotation.x = 0.34; tilt.rotation.z = 0.12; scene.add(tilt);
+      const spin = new THREE.Group(); tilt.add(spin);
+
+      const R = 6.2, N = 14000, ARMS = 2, WIND = 2.3, ARM_SPREAD = 0.55, HAZE = 0.28;
+      const gauss = () => (Math.random()+Math.random()+Math.random()-1.5);
+      const aPos = new Float32Array(N*3), aCol = new Float32Array(N*3), aSize = new Float32Array(N);
+      const cCore=new THREE.Color(0xfff1cf), cIn=new THREE.Color(0xffcf86), cMid=new THREE.Color(0xef8638), cOut=new THREE.Color(0x6e2410), tc=new THREE.Color();
+      for (let i=0;i<N;i++){
+        const rr=Math.pow(Math.random(),1.9), r=0.25+rr*R;
+        let th;
+        if (Math.random()<HAZE) th=Math.random()*Math.PI*2;
+        else th=Math.floor(Math.random()*ARMS)*(Math.PI*2/ARMS)+r*WIND+gauss()*ARM_SPREAD;
+        const jx=(Math.random()-0.5)*0.45, jz=(Math.random()-0.5)*0.45;
+        const bulge=1-rr, y=(Math.random()-0.5)*(0.04+bulge*0.34);
+        aPos[i*3]=Math.cos(th)*r+jx; aPos[i*3+1]=y; aPos[i*3+2]=Math.sin(th)*r+jz;
+        const f=r/(R+0.25);
+        if (f<0.12) tc.copy(cCore).lerp(cIn,f/0.12);
+        else if (f<0.45) tc.copy(cIn).lerp(cMid,(f-0.12)/0.33);
+        else tc.copy(cMid).lerp(cOut,(f-0.45)/0.55);
+        const ring=0.62+0.38*Math.pow(0.5+0.5*Math.sin(r*2.4-0.6),1.6);
+        aCol[i*3]=tc.r*ring; aCol[i*3+1]=tc.g*ring; aCol[i*3+2]=tc.b*ring;
+        aSize[i]=(f<0.1?0.10:0.066)*(0.6+Math.random()*0.8);
       }
-      const jx = (Math.random()-0.5) * 0.45, jz = (Math.random()-0.5) * 0.45;
-      const x = Math.cos(th)*r + jx, z = Math.sin(th)*r + jz;
-      const bulge = 1 - rr;
-      const y = (Math.random()-0.5) * (0.04 + bulge*0.34);   // flat disk, soft central bulge
-      aPos[i*3] = x; aPos[i*3+1] = y; aPos[i*3+2] = z;
-      const f = r / (R + 0.25);
-      if (f < 0.12) tc.copy(cCore).lerp(cIn, f/0.12);
-      else if (f < 0.45) tc.copy(cIn).lerp(cMid, (f-0.12)/0.33);
-      else tc.copy(cMid).lerp(cOut, (f-0.45)/0.55);
-      // faint concentric dust rings/gaps
-      const ring = 0.62 + 0.38 * Math.pow(0.5 + 0.5*Math.sin(r*2.4 - 0.6), 1.6);
-      aCol[i*3] = tc.r*ring; aCol[i*3+1] = tc.g*ring; aCol[i*3+2] = tc.b*ring;
-      aSize[i] = (f < 0.1 ? 0.10 : 0.066) * (0.6 + Math.random()*0.8);
+      const dg=new THREE.BufferGeometry();
+      dg.setAttribute('position',new THREE.BufferAttribute(aPos,3));
+      dg.setAttribute('aColor',new THREE.BufferAttribute(aCol,3));
+      dg.setAttribute('aSize',new THREE.BufferAttribute(aSize,1));
+      const diskMat=new THREE.ShaderMaterial({
+        uniforms:{ map:{value:dot}, uOpacity:{value:P.diskOpacity} },
+        vertexShader:`attribute float aSize; attribute vec3 aColor; varying vec3 vColor;
+          void main(){ vColor=aColor; vec4 mv=modelViewMatrix*vec4(position,1.0);
+          gl_PointSize=aSize*(340.0/-mv.z); gl_Position=projectionMatrix*mv; }`,
+        fragmentShader:`uniform sampler2D map; uniform float uOpacity; varying vec3 vColor;
+          void main(){ vec4 t=texture2D(map,gl_PointCoord); if(t.a<0.01) discard; gl_FragColor=vec4(vColor,t.a*uOpacity); }`,
+        transparent:true, blending:THREE.AdditiveBlending, depthWrite:false });
+      spin.add(new THREE.Points(dg, diskMat));
+
+      const coreMat=new THREE.SpriteMaterial({ map:coreTex, color:0xffe9c4, transparent:true, opacity:P.coreOpacity, blending:THREE.AdditiveBlending, depthWrite:false });
+      const core=new THREE.Sprite(coreMat); core.scale.setScalar(P.coreSize); tilt.add(core);
+
+      const SN=1500, sPos=new Float32Array(SN*3);
+      for (let i=0;i<SN;i++){ const u=Math.random()*2-1,a=Math.random()*Math.PI*2,rad=40+Math.random()*40,s=Math.sqrt(1-u*u);
+        sPos[i*3]=Math.cos(a)*s*rad; sPos[i*3+1]=u*rad*0.6; sPos[i*3+2]=Math.sin(a)*s*rad-20; }
+      const sg=new THREE.BufferGeometry(); sg.setAttribute('position',new THREE.BufferAttribute(sPos,3));
+      const starMat=new THREE.PointsMaterial({ size:0.5, map:dot, color:0xcdd8ff, transparent:true, opacity:P.starOpacity, depthWrite:false, blending:THREE.AdditiveBlending, sizeAttenuation:true });
+      scene.add(new THREE.Points(sg, starMat));
+
+      return {
+        P,
+        background: (w,h) => bgCanvas(w,h,(x,W,H)=>{
+          const g=x.createLinearGradient(0,0,0,H);
+          g.addColorStop(0,'#06070f'); g.addColorStop(.5,'#080810'); g.addColorStop(1,'#050409');
+          x.fillStyle=g; x.fillRect(0,0,W,H);
+          const blob=(cx,cy,r,col,a)=>{const rg=x.createRadialGradient(cx,cy,0,cx,cy,r);rg.addColorStop(0,col);rg.addColorStop(1,'rgba(0,0,0,0)');x.globalAlpha=a;x.fillStyle=rg;x.fillRect(0,0,W,H);x.globalAlpha=1;};
+          blob(W*0.26,H*0.20,Math.max(W,H)*0.55,'rgba(46,64,128,1)',.10);
+          blob(W*0.76,H*0.82,Math.max(W,H)*0.55,'rgba(128,72,40,1)',.10);
+        }),
+        fit: () => { const fov=camera.fov*Math.PI/180, need=R*1.18;
+          let z=need/(Math.tan(fov/2)*camera.aspect); z=Math.max(9,Math.min(z,28));
+          camera.position.set(0, z*0.07, z); camera.lookAt(0,0,0); },
+        animate: (t,dt) => { spin.rotation.y += dt*P.spinSpeed; },
+        apply: () => { diskMat.uniforms.uOpacity.value=P.diskOpacity; core.scale.setScalar(P.coreSize); coreMat.opacity=P.coreOpacity; starMat.opacity=P.starOpacity; },
+        gui: (gui) => { const f=gui.addFolder('galaxy');
+          f.add(P,'exposure',0,2,0.01).onChange(applyParams);
+          f.add(P,'diskOpacity',0,1.5,0.01).onChange(applyParams);
+          f.add(P,'coreSize',0,6,0.05).onChange(applyParams);
+          f.add(P,'coreOpacity',0,1.5,0.01).onChange(applyParams);
+          f.add(P,'spinSpeed',0,0.4,0.005);
+          const s=gui.addFolder('scene');
+          s.add(P,'starOpacity',0,1,0.01).onChange(applyParams);
+          s.add(P,'bgIntensity',0,1.5,0.01).onChange(applyParams); }
+      };
     }
-    const dg = new THREE.BufferGeometry();
-    dg.setAttribute('position', new THREE.BufferAttribute(aPos, 3));
-    dg.setAttribute('aColor', new THREE.BufferAttribute(aCol, 3));
-    dg.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1));
 
-    const diskMat = new THREE.ShaderMaterial({
-      uniforms: { map: { value: dot }, uOpacity: { value: P.diskOpacity } },
-      vertexShader: `
-        attribute float aSize; attribute vec3 aColor; varying vec3 vColor;
-        void main(){
-          vColor = aColor;
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = aSize * (340.0 / -mv.z);
-          gl_Position = projectionMatrix * mv;
-        }`,
-      fragmentShader: `
-        uniform sampler2D map; uniform float uOpacity; varying vec3 vColor;
-        void main(){
-          vec4 t = texture2D(map, gl_PointCoord);
-          if (t.a < 0.01) discard;
-          gl_FragColor = vec4(vColor, t.a * uOpacity);
-        }`,
-      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    const disk = new THREE.Points(dg, diskMat);
-    spin.add(disk);
+    // ---------- build the chosen view ----------
+    const api = view === 'galaxy' ? makeGalaxy() : makeStarfield();
 
-    // bright nucleus
-    const coreMat = new THREE.SpriteMaterial({
-      map: coreTex, color: 0xffe9c4, transparent: true, opacity: P.coreOpacity,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    const core = new THREE.Sprite(coreMat);
-    core.scale.setScalar(P.coreSize);
-    tilt.add(core);
-
-    // ---- distant background stars (static) ----
-    const SN = 1500;
-    const sPos = new Float32Array(SN*3);
-    for (let i = 0; i < SN; i++) {
-      // shell well behind/around the disk
-      const u = Math.random()*2-1, a = Math.random()*Math.PI*2, rad = 40 + Math.random()*40;
-      const s = Math.sqrt(1-u*u);
-      sPos[i*3] = Math.cos(a)*s*rad; sPos[i*3+1] = u*rad*0.6; sPos[i*3+2] = Math.sin(a)*s*rad - 20;
-    }
-    const sg = new THREE.BufferGeometry();
-    sg.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
-    const starMat = new THREE.PointsMaterial({
-      size: 0.5, map: dot, color: 0xcdd8ff, transparent: true,
-      opacity: P.starOpacity, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
-    });
-    const stars = new THREE.Points(sg, starMat);
-    scene.add(stars);
-
-    // ---- post-processing ----
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(1,1), P.bloomStrength, P.bloomRadius, P.bloomThreshold);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(1,1), api.P.bloomStrength, api.P.bloomRadius, api.P.bloomThreshold);
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
 
     function applyParams() {
-      renderer.toneMappingExposure = P.exposure;
-      bloom.strength = P.bloomStrength;
-      bloom.radius = P.bloomRadius;
-      bloom.threshold = P.bloomThreshold;
-      diskMat.uniforms.uOpacity.value = P.diskOpacity;
-      core.scale.setScalar(P.coreSize);
-      coreMat.opacity = P.coreOpacity;
-      starMat.opacity = P.starOpacity;
-      scene.backgroundIntensity = P.bgIntensity;
+      renderer.toneMappingExposure = api.P.exposure;
+      bloom.strength = api.P.bloomStrength;
+      bloom.radius = api.P.bloomRadius;
+      bloom.threshold = api.P.bloomThreshold;
+      scene.backgroundIntensity = api.P.bgIntensity;
+      api.apply();
     }
 
-    // ---- fit & resize ----
     function fit() {
       const w = window.innerWidth, h = window.innerHeight;
-      renderer.setSize(w, h);
-      composer.setSize(w, h);
-      bloom.setSize(w, h);
+      renderer.setSize(w, h); composer.setSize(w, h); bloom.setSize(w, h);
       if (scene.background) scene.background.dispose();
-      scene.background = makeBackground(w, h);
+      scene.background = api.background(w, h);
       camera.aspect = w / h;
-      const fov = camera.fov * Math.PI/180;
-      const need = R * 1.18;
-      let z = need / (Math.tan(fov/2) * camera.aspect);   // fit the disk width
-      z = Math.max(9, Math.min(z, 28));
-      camera.position.set(0, z * 0.07, z);
-      camera.lookAt(0, 0, 0);
+      api.fit();
       camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', fit);
     fit();
     applyParams();
 
-    // ---- render (start first; nothing below can prevent it) ----
+    // ---------- render ----------
     const clock = new THREE.Clock();
-    function frame() {
-      const dt = clock.getDelta();
-      spin.rotation.y += dt * P.spinSpeed;     // the slow rotation
-      composer.render();
-    }
+    let t = 0;
+    function frame() { const dt = clock.getDelta(); t += dt; api.animate(t, dt); composer.render(); }
     if (reduced) composer.render();
     else renderer.setAnimationLoop(frame);
 
-    // ---- live tuning panel (local only): open with ?tune ----
+    // ---------- live tuning panel (local only): open with ?tune ----------
     if (new URLSearchParams(location.search).has('tune')) {
       try {
         const mod = await import('https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.esm.js');
         const GUI = mod.GUI || mod.default;
-        const gui = new GUI({ title: 'zerostep · tune' });
-        const f1 = gui.addFolder('bloom');
-        f1.add(P, 'bloomStrength', 0, 2, 0.01).onChange(applyParams);
-        f1.add(P, 'bloomRadius', 0, 1.5, 0.01).onChange(applyParams);
-        f1.add(P, 'bloomThreshold', 0, 1, 0.01).onChange(applyParams);
-        const f2 = gui.addFolder('galaxy');
-        f2.add(P, 'exposure', 0, 2, 0.01).onChange(applyParams);
-        f2.add(P, 'diskOpacity', 0, 1.5, 0.01).onChange(applyParams);
-        f2.add(P, 'coreSize', 0, 6, 0.05).onChange(applyParams);
-        f2.add(P, 'coreOpacity', 0, 1.5, 0.01).onChange(applyParams);
-        f2.add(P, 'spinSpeed', 0, 0.4, 0.005);
-        const f3 = gui.addFolder('scene');
-        f3.add(P, 'starOpacity', 0, 1, 0.01).onChange(applyParams);
-        f3.add(P, 'bgIntensity', 0, 1.5, 0.01).onChange(applyParams);
+        const gui = new GUI({ title: 'zerostep · ' + view });
+        const fb = gui.addFolder('bloom');
+        fb.add(api.P,'bloomStrength',0,2,0.01).onChange(applyParams);
+        fb.add(api.P,'bloomRadius',0,1.5,0.01).onChange(applyParams);
+        fb.add(api.P,'bloomThreshold',0,1,0.01).onChange(applyParams);
+        api.gui(gui);
+        const fv = gui.addFolder('view');
+        fv.add({ galaxy: () => location.search = '?view=galaxy&tune' }, 'galaxy').name('→ galaxy');
+        fv.add({ starfield: () => location.search = '?view=starfield&tune' }, 'starfield').name('→ starfield');
         gui.add({ copy: async () => {
-          const json = JSON.stringify(P, null, 2);
-          console.log('zerostep params:\n' + json);
+          const json = JSON.stringify(api.P, null, 2);
+          console.log('zerostep ' + view + ' params:\n' + json);
           let ok = false;
           try { await navigator.clipboard.writeText(json); ok = true; } catch {}
-          if (!ok) {                                   // clipboard API needs https — fall back for LAN http
-            const ta = document.createElement('textarea');
-            ta.value = json; ta.style.position = 'fixed'; ta.style.opacity = '0';
-            document.body.appendChild(ta); ta.focus(); ta.select();
-            try { ok = document.execCommand('copy'); } catch {}
-            ta.remove();
-          }
-          if (!ok) window.prompt('Copy these values:', json); // last resort
+          if (!ok) { const ta=document.createElement('textarea'); ta.value=json; ta.style.position='fixed'; ta.style.opacity='0';
+            document.body.appendChild(ta); ta.focus(); ta.select(); try { ok=document.execCommand('copy'); } catch {} ta.remove(); }
+          if (!ok) window.prompt('Copy these values:', json);
         } }, 'copy').name('▶ copy values (or see console)');
-      } catch (e) {
-        console.warn('tuning panel failed to load (scene is unaffected):', e);
-      }
+      } catch (e) { console.warn('tuning panel failed to load (scene is unaffected):', e); }
     }
   </script>
 </body>
