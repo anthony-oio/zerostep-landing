@@ -43,7 +43,17 @@
     }
     .bar.top { top: 0; } .bar.bottom { bottom: 0; }
 
-    @media (prefers-reduced-motion: reduce) { .grain { animation: none !important; } }
+    /* fade-in from black on load — smooths the reload swap between skies */
+    .fade {
+      position: fixed; inset: 0; z-index: 60; background: #05060c;
+      pointer-events: none; opacity: 1; transition: opacity 1.4s ease;
+    }
+    .fade.gone { opacity: 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .grain { animation: none !important; }
+      .fade { transition: none; }
+    }
   </style>
 </head>
 <body>
@@ -68,6 +78,7 @@
   <div class="vignette"></div>
   <div class="bar top"></div>
   <div class="bar bottom"></div>
+  <div class="fade" id="fade"></div>
 
   <!-- hidden in plain sight: real, crawlable links for the inspectors -->
   <nav hidden aria-hidden="true" id="rooms">
@@ -304,10 +315,14 @@
     applyParams();
 
     // ---------- render ----------
+    const fadeEl = document.getElementById('fade');
+    let revealed = false;
+    function reveal() { if (!revealed) { revealed = true; fadeEl.classList.add('gone'); } }
+
     const clock = new THREE.Clock();
     let t = 0;
-    function frame() { const dt = clock.getDelta(); t += dt; api.animate(t, dt); composer.render(); }
-    if (reduced) composer.render();
+    function frame() { const dt = clock.getDelta(); t += dt; api.animate(t, dt); composer.render(); reveal(); }
+    if (reduced) { composer.render(); reveal(); }
     else renderer.setAnimationLoop(frame);
 
     // ---------- live tuning panel (local only): open with ?tune ----------
