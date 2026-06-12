@@ -3,24 +3,19 @@
 The apex landing page for **zerostep.cc** — deployed on Cloudflare Pages (free tier).
 
 A **Three.js** scene (loaded as a static CDN ES module — no build step, no server):
-the `zerostep` wordmark as extruded, glowing 3D letters with a cyan→indigo
-vertex gradient, a drifting particle/atmosphere field, and UnrealBloom, set in a
-baked murky green-amber dusk. Palette is sampled from the glowing blue figure in
-the reference animation. Letterbox bars, film grain and a vignette sit on top as
-CSS overlays.
+a slowly rotating spiral-galaxy / accretion disk — ~14k particles in 2 logarithmic
+spiral arms, dense gold core fading to amber/ember at the rim, a glowing nucleus,
+distant background stars, and UnrealBloom, on near-black space. Tilted near
+edge-on after a "universe from a distance" reference. Letterbox bars, film grain
+and a vignette sit on top as CSS overlays.
 
 App links are intentionally hidden from the rendered page and live only in the
 source (an HTML comment + a `hidden` `<nav>`) — an easter egg for inspectors.
 
-## Wordmark geometry
-The 3D letters are extruded from real Caveat Brush glyph outlines (not a
-typeface-font conversion). To regenerate after a font/word change:
-
-```
-npm install                       # opentype.js
-node make-path.cjs                # writes wordmark-path.json from CaveatBrush-Regular.ttf
-# then inline wordmark-path.json's `d` into the WORD_D const in index.html
-```
+## Tuning
+Open the page with `?tune` (local only) for a lil-gui panel of live sliders
+(bloom, exposure, disk/core, spin, stars). The panel is gated behind `?tune`, so
+it never loads in production. Baked defaults live in the `P` object in index.html.
 
 ## Icons
 `icon.html` renders the brushed `z` app icon; the PNGs (favicon 16/32,
@@ -39,5 +34,5 @@ build regenerates it. Serving only `public/` sidesteps it entirely.
 ## Layout
 - `public/` — the deployed static site (index.html + icons + manifest); the only
   thing Cloudflare uploads.
-- repo root — build tooling only (`make-path.cjs`, the TTF, `package.json`,
-  `wrangler.jsonc`); never deployed.
+- repo root — config + legacy tooling (`wrangler.jsonc`; plus `make-path.cjs` +
+  the TTF from the earlier wordmark design, kept for reference); never deployed.

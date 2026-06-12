@@ -5,3 +5,4 @@ thumb_*.jpg
 node_modules/
 cf-build-error.png
 cf-err-crop.png
+ref-*.png

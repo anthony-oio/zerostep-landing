@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>zerostep</title>
   <meta name="description" content="zerostep" />
-  <meta name="theme-color" content="#142420" />
+  <meta name="theme-color" content="#05060c" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -17,11 +17,8 @@
     body {
       overflow: hidden;
       position: relative;
-      background:
-        radial-gradient(70% 60% at 50% 44%, rgba(40,150,210,.26) 0%, rgba(40,150,210,0) 55%),
-        radial-gradient(80% 70% at 24% 18%, rgba(96,150,76,.40) 0%, rgba(96,150,76,0) 50%),
-        radial-gradient(150% 130% at 52% 118%, #0b121a 0%, #1a281f 30%, #38421d 55%, #2c2611 80%, #0e140c 100%);
-      background-color: #0b1018;
+      background: radial-gradient(120% 120% at 50% 45%, #0a0c16 0%, #06060e 55%, #040308 100%);
+      background-color: #05060c;
     }
 
     #scene { position: fixed; inset: 0; z-index: 1; display: block; }
@@ -30,7 +27,7 @@
     .grain {
       position: fixed; inset: -50%; z-index: 2;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      opacity: .14; mix-blend-mode: overlay; pointer-events: none;
+      opacity: .10; mix-blend-mode: overlay; pointer-events: none;
       animation: grain 1.6s steps(6) infinite;
     }
     @keyframes grain {
@@ -40,11 +37,10 @@
 
     .vignette {
       position: fixed; inset: 0; z-index: 3; pointer-events: none;
-      background: radial-gradient(110% 100% at 50% 44%, transparent 40%, rgba(6,10,18,.78) 100%);
+      background: radial-gradient(120% 110% at 50% 48%, transparent 45%, rgba(2,2,6,.7) 100%);
       mix-blend-mode: multiply;
     }
 
-    /* cinematic letterbox bars */
     .bar {
       position: fixed; left: 0; right: 0; height: 9vh; min-height: 38px;
       background: #000; z-index: 50; pointer-events: none;
@@ -52,9 +48,7 @@
     }
     .bar.top { top: 0; } .bar.bottom { bottom: 0; }
 
-    @media (prefers-reduced-motion: reduce) {
-      .grain { animation: none !important; }
-    }
+    @media (prefers-reduced-motion: reduce) { .grain { animation: none !important; } }
   </style>
 </head>
 <body>
@@ -100,140 +94,186 @@
 
   <script type="module">
     import * as THREE from 'three';
-    import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
     import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
     import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
     import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
     import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-    // the brush-font "zerostep" outline, generated offline from Caveat Brush
-    const WORD_D = "M78.600-9.800L78.600-9.800L78.800-7.200Q78.800-5.600 77.200-4.800L77.200-4.800Q74.400-2.400 56.600 3.600L56.600 3.600Q52 5 32.400 7.600L32.400 7.600Q25 10.200 20.300 10.100Q15.600 10 14.200 9.400L14.200 9.400Q12.800 9.200 9.800 4L9.800 4Q9.800 2.600 7.800-1.600L7.800-1.600Q6.800-2.600 5.800-6.200L5.800-6.200Q4-12.800 3.600-15.200L3.600-15.200L3.600-18Q3.600-20.600 7.800-25.600L7.800-25.600Q8.400-26.200 8.800-27.300Q9.200-28.400 13.400-32.600L13.400-32.600L23.200-41Q24.200-42.400 26-43.400L26-43.400Q27-44 31.200-47.400L31.200-47.400L38.400-52Q44.600-56.600 44.800-56.900Q45-57.200 45.200-57.600L45.200-57.600Q45.600-58.800 43.400-58.800L43.400-58.800L38.600-58.800Q21-58.800 19.400-59.600L19.400-59.600Q16.600-61.200 14.400-67L14.400-67Q14.200-67.400 12.900-68.900Q11.600-70.400 11.400-74L11.400-74Q11.800-76.400 15.800-78.800L15.800-78.800L19.800-80.400Q20.200-80.800 28.200-82.200L28.200-82.200Q31.600-82.200 32.400-82.400L32.400-82.400L32.600-82.400Q33.600-82.600 43.900-81.200Q54.200-79.800 56-78.800L56-78.800Q56.400-78.800 57.400-78.600Q58.400-78.400 59.400-78.400L59.400-78.400Q64.200-77.800 66.600-75L66.600-75Q68.800-72 71.500-65Q74.200-58 74.200-55.400L74.200-55.400Q73.800-54 72.800-53L72.800-53L70.400-51.200Q68.400-49.200 67.400-49.100Q66.400-49 61.300-45.200Q56.200-41.400 53.800-39.200L53.800-39.200Q53.200-39.200 41-30.200L41-30.200Q38.400-28.800 31.200-21.200L31.200-21.200Q29.200-19.400 27.500-16.800Q25.800-14.200 25.800-12.200Q25.800-10.200 26.800-10L26.800-10Q36.400-9.200 40.400-11L40.400-11Q42.800-12.400 46.200-12.400L46.200-12.400Q53.600-13 57.900-14.100Q62.200-15.200 64.600-15.200L64.600-15.200Q72-16 72.900-15.800Q73.800-15.600 74.700-14.900Q75.600-14.200 76.400-14L76.400-14Q78.600-11 78.600-9.800ZM131-64L131-64Q131.800-67 130.800-71.600L130.800-71.600Q129.400-72.800 127.000-72.800L127.000-72.800Q124.000-72.800 121.600-67.200L121.600-67.200Q118.400-62.400 116.800-56.600L116.800-56.600L116.600-56.600Q114.400-48.200 114.400-47.600L114.400-47.600Q117.600-46.800 119.600-46.900Q121.600-47 124.200-49L124.200-49Q128.800-53.400 131-64ZM130.400-35.200L130.400-35.200L123.000-34.600Q116.800-34.600 113.200-35.800L113.200-35.800L113.800-32Q114.400-15.400 123.000-10.200L123.000-10.200Q125.400-9.200 127.000-9.200Q128.600-9.200 131.200-10.800L131.200-10.800Q132-11.600 132.600-13L132.600-13Q132.800-14.800 134.600-14.600L134.600-14.600Q142.800-25 147-22.800L147-22.800Q151.200-20 151.200-18.400L151.200-18.400Q151.200-17.600 150.200-16.600L150.200-16.600L150.200-15.400Q150.200-13.400 147.700-8.200Q145.200-3 142.400 0.600L142.400 0.600Q141 3.600 138.800 4.800L138.800 4.800Q132.400 8.800 125.200 8L125.200 8Q123.600 7.800 123.000 7.200L123.000 7.200Q121.400 6.800 120.600 7L120.600 7L119 6.800Q117.200 6.800 116 6L116 6Q114 4.800 113.200 4.800L113.200 4.800Q108.000 2.800 106.900 1.800Q105.800 0.800 105.000 0.400Q104.200 0 101.200-3.800L101.200-3.800Q98.600-6 98.200-6.600L98.200-6.600Q97.000-8.400 96.100-9.200Q95.200-10 95.000-12.800L95.000-12.800Q94.200-13.800 94.200-15.400L94.200-15.400L93.400-17Q93.400-18.400 92.200-19.200L92.200-19.200Q91.000-20.400 91.000-22.200L91.000-22.200L91.000-23.800Q90.200-24.200 90.600-26.200L90.600-26.200L90.600-31.400L90.400-33.200L90.400-34.600Q90.200-35.400 90.800-38L90.800-38L90.600-39.800Q90.800-40 91.200-43L91.200-43Q92.000-47.200 93.000-48.200L93.000-48.200L93.000-50Q93.200-50.600 93.200-51.600Q93.200-52.600 93.700-53.800Q94.200-55 96.800-62.800L96.800-62.800L100.000-69.800Q101.400-72.800 104.400-76.400L104.400-76.400Q104.600-77.400 106.000-80L106.000-80L108.600-82.400Q109.800-84.200 112.200-85L112.200-85Q115-86.400 116.400-86.400L116.400-86.400L122.000-87.200Q123.000-87 123.400-87L123.400-87L126.000-87Q130.400-86.600 133.200-85.200L133.200-85.200Q139.200-83.400 142-80.600L142-80.600Q148.200-73.600 148.200-67.200Q148.200-60.800 146.200-56.200L146.200-56.200Q141.200-44.800 139-41.800L139-41.800Q135.400-35.200 130.400-35.200ZM169.800-48.400L168.000-59Q168.000-60.800 167.600-63.200L167.600-63.200L167.600-64.600Q167.800-66 167.400-67.600L167.400-67.600Q167.400-69.600 167.800-71.200L167.800-71.200Q167.800-75.200 168.800-76.400L168.800-76.400Q168.800-77.400 171.600-81L171.600-81Q172.400-81.800 174.600-83.600L174.600-83.600Q177.800-84.600 179.000-84.800L179.000-84.800Q179.800-85.600 184.400-84.200L184.400-84.200Q186.400-84 190.600-82.800L190.600-82.800Q192.000-82.400 194.200-79.600L194.200-79.600Q193.800-78.800 192.900-73.700Q192.000-68.600 192.200-65.400L192.200-65.400Q193.400-66.400 196.400-69.600Q199.400-72.800 199.600-73L199.600-73Q204.800-75.400 209.800-76.400L209.800-76.400Q217.000-77 219.200-75.400L219.200-75.400Q221.000-74.800 222.000-73.600L222.000-73.600Q223.800-72 225.000-68.100Q226.200-64.200 224.800-63.200L224.800-63.200Q223.600-62.200 216.800-61.600L216.800-61.600Q216.400-61.600 214.000-60L214.000-60L203.600-51.800Q200.400-50.200 199.200-49L199.200-49L195.400-42Q195.200-41.600 195.000-36.800Q194.800-32 195.000-29.900Q195.200-27.800 195.000-16.400L195.000-16.400L195.000-7.800Q195.000-0.800 194.800 0.300Q194.600 1.400 193.200 4.200L193.200 4.200Q192.600 5.200 189.400 5.200L189.400 5.200Q181.600 11 179.400 4.600L179.400 4.600L176.800 3Q175.200 2.200 174.800 1L174.800 1Q173.200-1.200 173.200-1.600L173.200-1.600L172.400-4.400L171.200-6.800Q170.600-7 170.200-14.500Q169.800-22 169.800-23.700Q169.800-25.400 169.400-27.400L169.400-27.400Q170.800-28.800 170.700-32.200Q170.600-35.600 170.200-37.500Q169.800-39.400 170.200-39.900Q170.600-40.400 170.000-45.400L170.000-45.400Q169.400-46.200 169.800-48.400L169.800-48.400ZM271.200-59L271.200-59Q269.800-67 263.400-66.400L263.400-66.400Q259.800-66.200 257.200-61.600L257.200-61.600Q253.600-54.600 254.100-43.500Q254.600-32.400 255.700-27.500Q256.800-22.600 259.600-19L259.600-19Q261.200-16.200 264.400-16.400L264.400-16.400Q270-16.400 272.600-25.800L272.600-25.800L274.200-30.600Q275.200-31.600 274.600-32.600L274.600-32.600Q276.600-37.600 276.800-44.400L276.800-44.400Q274.800-45.800 274.400-47L274.400-47Q273.200-50.400 273.200-51.600L273.200-51.600Q271.800-52.600 271.600-55.400Q271.400-58.200 271.200-59ZM234.600-40.200L234.600-40.200L235.400-50.400Q236.800-64.200 243.800-74L243.800-74Q250.600-82.200 263-82.400L263-82.400L264.200-82.400Q275.800-82.400 281-77.400L281-77.400Q286.600-73 289.300-67.800Q292-62.600 292.800-60.200Q293.600-57.800 293.800-53.200L293.800-53.200Q294.200-44.600 290.400-43.400L290.400-43.400Q293.200-24.400 287-13.200L287-13.200Q285-8.600 281.200-3.200L281.200-3.200Q278.400 0.400 271.200 0.800L271.200 0.800Q264 0.800 258.700 0Q253.400-0.800 247.000-5.100Q240.600-9.400 238.000-19.200L238.000-19.200Q235.200-28.600 234.600-40.200ZM317.800-77.600L317.800-77.600Q323.200-84.200 332.600-84.600L332.600-84.600Q348.000-85.200 355.500-77Q363.000-68.800 363.500-60.800Q364.000-52.800 359.400-52.200L359.400-52.200Q352.800-52 350.800-54L350.800-54Q349.000-53.800 346.200-56.600L346.200-56.600Q345.000-57.200 343.000-61.200L343.000-61.200L340.800-66.200Q339.200-69.800 336.800-70.200L336.800-70.200Q333.800-69 333.800-64.200L333.800-64.200Q334.600-54.800 342.800-46.200L342.800-46.200Q342.800-46.200 343.100-45.700Q343.400-45.200 346.000-42.400L346.000-42.400Q361.800-25 362.400-14.400L362.400-14.400Q362.400-7.600 359.600-5.400L359.600-5.400Q351.000 4.800 337.200 5.200Q323.400 5.600 314.400-3.400L314.400-3.400Q312.000-5.800 312.000-8L312.000-8Q310.800-11.800 311.200-13L311.200-13Q310.600-18.600 311.200-21.400L311.200-21.400Q312.400-27.800 320.600-28L320.600-28Q323.600-28 324.400-24.400L324.400-24.400Q327.000-14.200 329.300-11Q331.600-7.800 336.800-8L336.800-8Q343.400-8.400 343.100-15.400Q342.800-22.400 336.400-28.400L336.400-28.400Q334.400-30.800 332.500-32.100Q330.600-33.400 330.000-34L330.000-34Q329.800-34.600 329.000-35.200L329.000-35.200Q325.000-38.400 318.900-45.800Q312.800-53.200 312.400-59.600L312.400-59.600Q311.600-71 317.800-77.600ZM393.000-70.600L393.000-70.600L393.200-72.400Q389.000-72.800 387.300-73.100Q385.600-73.400 381.800-73.800Q378.000-74.200 375.800-75L375.800-75Q371.600-76.400 371.000-82.300Q370.400-88.200 374.800-89.600L374.800-89.600Q378.800-90.600 380.400-90.600Q382.000-90.600 386.400-91L386.400-91Q388.600-92.200 392.400-92.400L392.400-92.400L395.400-93.200Q395.400-93 397.000-93.600L397.000-93.600L398.000-97.800Q398.000-101 399.800-104.200L399.800-104.200Q399.800-105.600 402.400-112L402.400-112Q402.400-112.800 406.000-123.600L406.000-123.600Q406.800-124.600 412.000-128.200L412.000-128.200Q415.200-129.800 421.000-126L421.000-126Q424.200-124.600 425.400-122.200L425.400-122.200Q424.200-121 424.200-116.600L424.200-116.600Q424.000-115.200 421.400-101.800L421.400-101.800L421.400-96.200Q423.000-96 426.700-95.200Q430.400-94.400 435.600-93.400L435.600-93.400Q445.600-91.400 448.200-85.400L448.200-85.400Q449.200-81 447.800-79.200Q446.400-77.400 441.000-76.600L441.000-76.600Q436.600-76.400 429.500-76.400Q422.400-76.400 419.000-75.400L419.000-75.400Q418.600-71.800 418.600-69.800L418.600-69.800L418.400-66.800Q418.400-65.400 416.600-52L416.600-52Q415.400-50.200 414.600-33.400L414.600-33.400L414.600-18.800Q414.600-15.200 415.200-12L415.200-12Q415.400-7.600 416.200-5.800L416.200-5.800Q416.200-4 417.200 1.800L417.200 1.800Q414.800 7.600 409.300 7.600Q403.800 7.600 399.600 3.600L399.600 3.600L397.400 0.400Q396.800-1.200 396.500-1.800Q396.200-2.400 396.000-3.200L396.000-3.200Q394.600-7.200 393.800-8.200L393.800-8.200Q392.600-9.800 392.600-10.600Q392.600-11.400 392.600-12.600L392.600-12.600Q392.200-16 391.600-18.400L391.600-18.400Q390.600-19.400 390.600-25.200L390.600-25.200Q391.000-35.800 390.600-37.400L390.600-37.400Q391.200-38 390.800-45L390.800-45L391.400-49.400Q391.400-50.200 392.200-55.400L392.200-55.400Q391.800-56.200 392.000-59.700Q392.200-63.200 392.600-64.600L392.600-64.600Q393.000-67 393.000-70.600ZM489.400-64L489.400-64Q490.200-67 489.200-71.600L489.200-71.600Q487.800-72.800 485.400-72.800L485.400-72.800Q482.400-72.800 480.000-67.200L480.000-67.200Q476.800-62.400 475.200-56.600L475.200-56.600L475.000-56.600Q472.800-48.200 472.800-47.600L472.800-47.600Q476.000-46.800 478.000-46.900Q480.000-47 482.600-49L482.600-49Q487.200-53.400 489.400-64ZM488.800-35.200L488.800-35.200L481.400-34.600Q475.200-34.600 471.600-35.800L471.600-35.800L472.200-32Q472.800-15.400 481.400-10.200L481.400-10.200Q483.800-9.200 485.400-9.200Q487.000-9.200 489.600-10.800L489.600-10.800Q490.400-11.600 491.000-13L491.000-13Q491.200-14.800 493.000-14.600L493.000-14.600Q501.200-25 505.400-22.800L505.400-22.800Q509.600-20 509.600-18.400L509.600-18.400Q509.600-17.600 508.600-16.600L508.600-16.600L508.600-15.400Q508.600-13.400 506.100-8.200Q503.600-3 500.800 0.600L500.800 0.600Q499.400 3.600 497.200 4.800L497.200 4.800Q490.800 8.800 483.600 8L483.600 8Q482.000 7.800 481.400 7.200L481.400 7.200Q479.800 6.800 479.000 7L479.000 7L477.400 6.800Q475.600 6.800 474.400 6L474.400 6Q472.400 4.800 471.600 4.800L471.600 4.800Q466.400 2.800 465.300 1.800Q464.200 0.800 463.400 0.400Q462.600 0 459.600-3.800L459.600-3.800Q457.000-6 456.600-6.600L456.600-6.600Q455.400-8.400 454.500-9.200Q453.600-10 453.400-12.800L453.400-12.800Q452.600-13.800 452.600-15.400L452.600-15.400L451.800-17Q451.800-18.400 450.600-19.200L450.600-19.200Q449.400-20.400 449.400-22.200L449.400-22.200L449.400-23.800Q448.600-24.200 449.000-26.200L449.000-26.200L449.000-31.400L448.800-33.200L448.800-34.600Q448.600-35.400 449.200-38L449.200-38L449.000-39.800Q449.200-40 449.600-43L449.600-43Q450.400-47.200 451.400-48.200L451.400-48.200L451.400-50Q451.600-50.600 451.600-51.600Q451.600-52.600 452.100-53.800Q452.600-55 455.200-62.800L455.200-62.800L458.400-69.800Q459.800-72.800 462.800-76.400L462.800-76.400Q463.000-77.400 464.400-80L464.400-80L467.000-82.400Q468.200-84.200 470.600-85L470.600-85Q473.400-86.400 474.800-86.400L474.800-86.400L480.400-87.200Q481.400-87 481.800-87L481.800-87L484.400-87Q488.800-86.600 491.600-85.200L491.600-85.200Q497.600-83.400 500.400-80.600L500.400-80.600Q506.600-73.600 506.600-67.200Q506.600-60.800 504.600-56.200L504.600-56.200Q499.600-44.800 497.400-41.800L497.400-41.800Q493.800-35.200 488.800-35.200ZM574-56.400L574-58.800Q575-66.600 574.600-67.200L574.600-67.200Q573.600-66.800 572.200-65L572.200-65L565.600-57.600Q555.200-44.600 555.200-42.200L555.200-42.200Q555.200-41.800 553.800-39L553.800-39L554-35.800L553.600-27.200L553.600-25Q553.600-16.400 554.200-12.600L554.200-12.600Q554.400-13.200 557.600-15.200L557.600-15.200L561-19.800Q566.200-26.200 567.600-29L567.600-29Q572-42.400 572-44.200L572-44.200Q572-47 573.600-52.200L573.600-52.200Q573.600-54 574-56.400L574-56.400ZM531.200-62L531.200-62L532-71.200Q532.600-72.800 532.200-75.400L532.200-75.400L533.600-83.600Q533.600-85.400 533.400-87.500Q533.200-89.600 533.600-90.400L533.600-90.400Q534.400-92 537.800-93.200L537.800-93.200L537-93.200Q539-94.400 542.600-93.400Q546.200-92.400 548.600-91.600L548.600-91.600Q550-89.800 552.200-87.600L552.200-87.600L552.400-81.200Q552.400-76.200 553-70.800L553-70.800Q552.800-68.600 553-68L553-68L556.400-71.600Q556.600-72 560.900-76Q565.200-80 566.400-81L566.400-81Q566.400-82 568.800-82.600L568.800-82.600Q574-83.800 577.600-82.700Q581.200-81.600 581.600-81.600L581.600-81.600L589-78.400Q589-77.600 591-77L591-77L592.800-76Q593.800-76 595.400-74.600L595.400-74.600Q597.800-74.200 597.200-71.200L597.200-71.200Q597.200-70.400 597.800-69.600L597.800-69.600L597.800-64.800Q597.800-61.600 595.900-53.500Q594-45.400 593.500-44Q593-42.600 592.300-40.400Q591.600-38.200 590.800-36.200L590.800-36.200Q589.800-32.800 586.800-26.900Q583.800-21 580.800-17.600L580.800-17.600Q573.800-7.800 565.200-2L565.200-2Q555.800 1.600 553.400 2.200L553.400 2.200Q552.800 2.200 553.400 9.400L553.400 9.400L553.400 23.800L554 32.600L554.200 41.600Q554.600 48.200 553.800 49L553.800 49L551.400 51Q548.800 52 546.800 51.200L546.800 51.200Q542.800 50 542 49.400L542 49.400Q541.200 49.400 539.400 47.800L539.400 47.800L537.200 47Q534.400 47.400 533.800 45.600L533.800 45.600Q531.800 44 531.800 42.800L531.800 42.800L528.800 38.400Q527.600 35.400 527.600 32.800L527.600 32.800Q526.400 28.400 526.800 26L526.800 26L526.400 18.400L526.400 7.800Q526.400 2.400 526 0.800L526 0.800Q525.600-0.400 526.400-20.400L526.400-20.400Q527-24.400 527-25.400L527-25.400L530-50L530.600-56.800L530.600-58.400Q531.200-60.800 531.200-62Z";
+    // tunable look — dialled in locally via ?tune, baked here for prod
+    const P = {
+      exposure: 0.75,
+      bloomStrength: 0.5,
+      bloomRadius: 0.4,
+      bloomThreshold: 0.0,
+      diskOpacity: 0.65,
+      coreSize: 1.05,
+      coreOpacity: 0.69,
+      spinSpeed: 0.02,
+      starOpacity: 0.35,
+      bgIntensity: 0.0
+    };
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const canvas = document.getElementById('scene');
 
     let renderer;
-    try {
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    } catch (e) {
-      // no WebGL — the CSS backdrop + hidden links still stand on their own
-      canvas.style.display = 'none';
-      throw e;
-    }
+    try { renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true }); }
+    catch (e) { canvas.style.display = 'none'; throw e; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
-    renderer.setClearColor(0x000000, 0); // transparent — CSS dusk shows through
+    renderer.toneMappingExposure = P.exposure;
+    renderer.setClearColor(0x000000, 0);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, 2, 0.1, 100);
-    camera.position.set(0, 0, 9);
+    const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 300);
 
-    // murky green-amber dusk with a cool halo, baked as the scene backdrop
+    // ---- deep-space backdrop ----
     function makeBackground(w, h) {
       const cv = document.createElement('canvas');
       cv.width = Math.min(w, 1600); cv.height = Math.min(h, 1000);
       const x = cv.getContext('2d'), W = cv.width, H = cv.height;
-      let g = x.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, '#0b121a'); g.addColorStop(.30, '#1a281f');
-      g.addColorStop(.55, '#38421d'); g.addColorStop(.80, '#2c2611'); g.addColorStop(1, '#0e140c');
+      const g = x.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#06070f'); g.addColorStop(.5, '#080810'); g.addColorStop(1, '#050409');
       x.fillStyle = g; x.fillRect(0, 0, W, H);
       const blob = (cx, cy, r, col, a) => {
         const rg = x.createRadialGradient(cx, cy, 0, cx, cy, r);
         rg.addColorStop(0, col); rg.addColorStop(1, 'rgba(0,0,0,0)');
         x.globalAlpha = a; x.fillStyle = rg; x.fillRect(0, 0, W, H); x.globalAlpha = 1;
       };
-      blob(W*0.24, H*0.18, Math.max(W,H)*0.42, 'rgba(96,150,76,1)', .40);   // mossy green
-      blob(W*0.66, H*1.02, Math.max(W,H)*0.42, 'rgba(140,90,30,1)', .34);   // warm amber low
-      blob(W*0.50, H*0.46, Math.max(W,H)*0.40, 'rgba(40,150,210,1)', .26);  // cool halo behind mark
+      blob(W*0.26, H*0.20, Math.max(W,H)*0.55, 'rgba(46,64,128,1)', .10);  // faint cool nebula
+      blob(W*0.76, H*0.82, Math.max(W,H)*0.55, 'rgba(128,72,40,1)', .10);  // faint warm nebula
       const tex = new THREE.CanvasTexture(cv);
       tex.colorSpace = THREE.SRGBColorSpace;
       return tex;
     }
 
-    // ---- lights ----
-    scene.add(new THREE.AmbientLight(0x2a3a55, 0.9));
-    const key = new THREE.DirectionalLight(0xaedcff, 1.5); key.position.set(-3, 4, 6); scene.add(key);
-    const rim = new THREE.DirectionalLight(0xffa455, 0.5); rim.position.set(3, -2, -4); scene.add(rim);
-    const glow = new THREE.PointLight(0x36b6ff, 6, 30); glow.position.set(0, 0, 4); scene.add(glow);
-
-    // ---- extruded wordmark ----
-    const group = new THREE.Group();
-    scene.add(group);
-
-    const loader = new SVGLoader();
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><path d="${WORD_D}"/></svg>`;
-    const paths = loader.parse(svg).paths;
-
-    const shapes = [];
-    for (const p of paths) for (const s of SVGLoader.createShapes(p)) shapes.push(s);
-
-    const geo = new THREE.ExtrudeGeometry(shapes, {
-      depth: 38, bevelEnabled: true, bevelThickness: 7, bevelSize: 4.5,
-      bevelSegments: 3, curveSegments: 10
-    });
-    geo.scale(1, -1, 1);            // SVG y-down → upright
-    geo.computeBoundingBox();
-    const bb = geo.boundingBox, ctr = new THREE.Vector3();
-    bb.getCenter(ctr);
-    geo.translate(-ctr.x, -ctr.y, -ctr.z);
-    geo.computeVertexNormals();
-
-    // vertical vertex-colour gradient: pale cyan up → deep indigo down (the blue figure)
-    const top = new THREE.Color(0x7fd4ff), bot = new THREE.Color(0x123a5e);
-    const pos = geo.attributes.position;
-    const minY = bb.min.y - ctr.y, maxY = bb.max.y - ctr.y, span = (maxY - minY) || 1;
-    const colors = new Float32Array(pos.count * 3);
-    const tmp = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const t = (pos.getY(i) - minY) / span;
-      tmp.copy(bot).lerp(top, Math.min(1, Math.max(0, t)));
-      colors[i*3] = tmp.r; colors[i*3+1] = tmp.g; colors[i*3+2] = tmp.b;
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const mat = new THREE.MeshStandardMaterial({
-      vertexColors: true, metalness: 0.35, roughness: 0.34,
-      emissive: 0x1b6fc0, emissiveIntensity: 0.42
-    });
-    const text = new THREE.Mesh(geo, mat);
-    text.scale.setScalar(0.014);
-    group.add(text);
-
-    // ---- particle / atmosphere field ----
-    const dot = (() => {
+    // ---- soft round sprite ----
+    function softDot(inner) {
       const c = document.createElement('canvas'); c.width = c.height = 64;
       const g = c.getContext('2d');
       const rg = g.createRadialGradient(32,32,0,32,32,32);
-      rg.addColorStop(0,'rgba(255,255,255,1)'); rg.addColorStop(.25,'rgba(180,225,255,.9)');
-      rg.addColorStop(1,'rgba(120,190,255,0)');
+      rg.addColorStop(0, 'rgba(255,255,255,1)');
+      rg.addColorStop(inner, 'rgba(255,255,255,.85)');
+      rg.addColorStop(1, 'rgba(255,255,255,0)');
       g.fillStyle = rg; g.fillRect(0,0,64,64);
-      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; return tex;
-    })();
-
-    const N = 1100;
-    const pp = new Float32Array(N*3), ph = new Float32Array(N);
-    for (let i=0;i<N;i++){
-      pp[i*3]   = (Math.random()-0.5)*22;
-      pp[i*3+1] = (Math.random()-0.5)*13;
-      pp[i*3+2] = (Math.random()-0.5)*12 - 3;
-      ph[i] = Math.random()*Math.PI*2;
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
     }
-    const pgeo = new THREE.BufferGeometry();
-    pgeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
-    const pmat = new THREE.PointsMaterial({
-      size: 0.085, map: dot, transparent: true, depthWrite: false,
-      blending: THREE.AdditiveBlending, color: 0x9bd2ff, opacity: 0.85
-    });
-    const motes = new THREE.Points(pgeo, pmat);
-    scene.add(motes);
+    const dot = softDot(0.22), coreTex = softDot(0.04);
 
-    // ---- post-processing: bloom ----
+    // ---- galaxy / accretion disk ----
+    const tilt = new THREE.Group();
+    tilt.rotation.x = 0.34;    // flatter / more edge-on — thin, wide ellipse like the reference
+    tilt.rotation.z = 0.12;
+    scene.add(tilt);
+    const spin = new THREE.Group();
+    tilt.add(spin);
+
+    const R = 6.2, N = 14000;
+    const ARMS = 2;        // number of spiral arms
+    const WIND = 2.3;      // how tightly the arms wind
+    const ARM_SPREAD = 0.55; // angular scatter across an arm (radians)
+    const HAZE = 0.28;     // fraction of stars left as smooth inter-arm haze
+    const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5); // ~normal, ±1.5
+    const aPos = new Float32Array(N*3), aCol = new Float32Array(N*3), aSize = new Float32Array(N);
+    const cCore = new THREE.Color(0xfff1cf), cIn = new THREE.Color(0xffcf86),
+          cMid = new THREE.Color(0xef8638), cOut = new THREE.Color(0x6e2410);
+    const tc = new THREE.Color();
+    for (let i = 0; i < N; i++) {
+      const rr = Math.pow(Math.random(), 1.9);          // dense toward the core
+      const r = 0.25 + rr * R;
+      let th;
+      if (Math.random() < HAZE) {
+        th = Math.random() * Math.PI * 2;               // smooth disk haze between arms
+      } else {
+        const branch = Math.floor(Math.random() * ARMS) * (Math.PI * 2 / ARMS);
+        th = branch + r * WIND + gauss() * ARM_SPREAD;  // log-spiral arm + scatter
+      }
+      const jx = (Math.random()-0.5) * 0.45, jz = (Math.random()-0.5) * 0.45;
+      const x = Math.cos(th)*r + jx, z = Math.sin(th)*r + jz;
+      const bulge = 1 - rr;
+      const y = (Math.random()-0.5) * (0.04 + bulge*0.34);   // flat disk, soft central bulge
+      aPos[i*3] = x; aPos[i*3+1] = y; aPos[i*3+2] = z;
+      const f = r / (R + 0.25);
+      if (f < 0.12) tc.copy(cCore).lerp(cIn, f/0.12);
+      else if (f < 0.45) tc.copy(cIn).lerp(cMid, (f-0.12)/0.33);
+      else tc.copy(cMid).lerp(cOut, (f-0.45)/0.55);
+      // faint concentric dust rings/gaps
+      const ring = 0.62 + 0.38 * Math.pow(0.5 + 0.5*Math.sin(r*2.4 - 0.6), 1.6);
+      aCol[i*3] = tc.r*ring; aCol[i*3+1] = tc.g*ring; aCol[i*3+2] = tc.b*ring;
+      aSize[i] = (f < 0.1 ? 0.10 : 0.066) * (0.6 + Math.random()*0.8);
+    }
+    const dg = new THREE.BufferGeometry();
+    dg.setAttribute('position', new THREE.BufferAttribute(aPos, 3));
+    dg.setAttribute('aColor', new THREE.BufferAttribute(aCol, 3));
+    dg.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1));
+
+    const diskMat = new THREE.ShaderMaterial({
+      uniforms: { map: { value: dot }, uOpacity: { value: P.diskOpacity } },
+      vertexShader: `
+        attribute float aSize; attribute vec3 aColor; varying vec3 vColor;
+        void main(){
+          vColor = aColor;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = aSize * (340.0 / -mv.z);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform sampler2D map; uniform float uOpacity; varying vec3 vColor;
+        void main(){
+          vec4 t = texture2D(map, gl_PointCoord);
+          if (t.a < 0.01) discard;
+          gl_FragColor = vec4(vColor, t.a * uOpacity);
+        }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const disk = new THREE.Points(dg, diskMat);
+    spin.add(disk);
+
+    // bright nucleus
+    const coreMat = new THREE.SpriteMaterial({
+      map: coreTex, color: 0xffe9c4, transparent: true, opacity: P.coreOpacity,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const core = new THREE.Sprite(coreMat);
+    core.scale.setScalar(P.coreSize);
+    tilt.add(core);
+
+    // ---- distant background stars (static) ----
+    const SN = 1500;
+    const sPos = new Float32Array(SN*3);
+    for (let i = 0; i < SN; i++) {
+      // shell well behind/around the disk
+      const u = Math.random()*2-1, a = Math.random()*Math.PI*2, rad = 40 + Math.random()*40;
+      const s = Math.sqrt(1-u*u);
+      sPos[i*3] = Math.cos(a)*s*rad; sPos[i*3+1] = u*rad*0.6; sPos[i*3+2] = Math.sin(a)*s*rad - 20;
+    }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute('position', new THREE.BufferAttribute(sPos, 3));
+    const starMat = new THREE.PointsMaterial({
+      size: 0.5, map: dot, color: 0xcdd8ff, transparent: true,
+      opacity: P.starOpacity, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true
+    });
+    const stars = new THREE.Points(sg, starMat);
+    scene.add(stars);
+
+    // ---- post-processing ----
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(1,1), 0.9, 0.55, 0.18);
+    const bloom = new UnrealBloomPass(new THREE.Vector2(1,1), P.bloomStrength, P.bloomRadius, P.bloomThreshold);
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
+
+    function applyParams() {
+      renderer.toneMappingExposure = P.exposure;
+      bloom.strength = P.bloomStrength;
+      bloom.radius = P.bloomRadius;
+      bloom.threshold = P.bloomThreshold;
+      diskMat.uniforms.uOpacity.value = P.diskOpacity;
+      core.scale.setScalar(P.coreSize);
+      coreMat.opacity = P.coreOpacity;
+      starMat.opacity = P.starOpacity;
+      scene.backgroundIntensity = P.bgIntensity;
+    }
 
     // ---- fit & resize ----
     function fit() {
@@ -244,34 +284,64 @@
       if (scene.background) scene.background.dispose();
       scene.background = makeBackground(w, h);
       camera.aspect = w / h;
-      const box = new THREE.Box3().setFromObject(text);
-      const size = box.getSize(new THREE.Vector3());
       const fov = camera.fov * Math.PI/180;
-      const distH = (size.y/2) / Math.tan(fov/2);
-      const distW = (size.x/2) / Math.tan(fov/2) / camera.aspect;
-      camera.position.z = Math.max(distH, distW) * 1.42 + 0.5;
+      const need = R * 1.18;
+      let z = need / (Math.tan(fov/2) * camera.aspect);   // fit the disk width
+      z = Math.max(9, Math.min(z, 28));
+      camera.position.set(0, z * 0.07, z);
+      camera.lookAt(0, 0, 0);
       camera.updateProjectionMatrix();
     }
     window.addEventListener('resize', fit);
     fit();
+    applyParams();
 
-    // ---- render ----
+    // ---- render (start first; nothing below can prevent it) ----
     const clock = new THREE.Clock();
     function frame() {
-      const t = clock.getElapsedTime();
-      // very slow, almost-imperceptible drift
-      group.rotation.y = Math.sin(t*0.05) * 0.13;
-      group.rotation.x = Math.sin(t*0.04) * 0.05;
-      group.position.y = Math.sin(t*0.06) * 0.06;
-      motes.rotation.y = t * 0.012;
-      motes.position.y = Math.sin(t*0.05) * 0.15;
+      const dt = clock.getDelta();
+      spin.rotation.y += dt * P.spinSpeed;     // the slow rotation
       composer.render();
     }
-    if (reduced) {
-      fit();
-      composer.render();
-    } else {
-      renderer.setAnimationLoop(frame);
+    if (reduced) composer.render();
+    else renderer.setAnimationLoop(frame);
+
+    // ---- live tuning panel (local only): open with ?tune ----
+    if (new URLSearchParams(location.search).has('tune')) {
+      try {
+        const mod = await import('https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.esm.js');
+        const GUI = mod.GUI || mod.default;
+        const gui = new GUI({ title: 'zerostep · tune' });
+        const f1 = gui.addFolder('bloom');
+        f1.add(P, 'bloomStrength', 0, 2, 0.01).onChange(applyParams);
+        f1.add(P, 'bloomRadius', 0, 1.5, 0.01).onChange(applyParams);
+        f1.add(P, 'bloomThreshold', 0, 1, 0.01).onChange(applyParams);
+        const f2 = gui.addFolder('galaxy');
+        f2.add(P, 'exposure', 0, 2, 0.01).onChange(applyParams);
+        f2.add(P, 'diskOpacity', 0, 1.5, 0.01).onChange(applyParams);
+        f2.add(P, 'coreSize', 0, 6, 0.05).onChange(applyParams);
+        f2.add(P, 'coreOpacity', 0, 1.5, 0.01).onChange(applyParams);
+        f2.add(P, 'spinSpeed', 0, 0.4, 0.005);
+        const f3 = gui.addFolder('scene');
+        f3.add(P, 'starOpacity', 0, 1, 0.01).onChange(applyParams);
+        f3.add(P, 'bgIntensity', 0, 1.5, 0.01).onChange(applyParams);
+        gui.add({ copy: async () => {
+          const json = JSON.stringify(P, null, 2);
+          console.log('zerostep params:\n' + json);
+          let ok = false;
+          try { await navigator.clipboard.writeText(json); ok = true; } catch {}
+          if (!ok) {                                   // clipboard API needs https — fall back for LAN http
+            const ta = document.createElement('textarea');
+            ta.value = json; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.focus(); ta.select();
+            try { ok = document.execCommand('copy'); } catch {}
+            ta.remove();
+          }
+          if (!ok) window.prompt('Copy these values:', json); // last resort
+        } }, 'copy').name('▶ copy values (or see console)');
+      } catch (e) {
+        console.warn('tuning panel failed to load (scene is unaffected):', e);
+      }
     }
   </script>
 </body>
